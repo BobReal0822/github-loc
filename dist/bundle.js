@@ -963,16 +963,88 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const React = __webpack_require__(6);
 const react_dom_1 = __webpack_require__(18);
 __webpack_require__(32);
+const Colors = {
+    null: '',
+    white: 'white',
+    pink: 'pink',
+    green: 'green'
+};
+const tt = chrome && chrome.extension && chrome.extension.getBackgroundPage() || {
+    console: window.console
+};
+const thisConsole = tt && tt.console;
+console.log = thisConsole && thisConsole.log;
 class Home extends React.Component {
     constructor(props) {
         super(props);
+        this.selectColor = event => {
+            const color = event.currentTarget.value;
+            console.log('color selected: ', color);
+            this.setState({
+                color
+            });
+            this.changeBackgroundColor(color);
+            this.getCurrentTabUrl(url => {
+                this.saveBackgroundColor(url, color);
+            });
+        };
+        this.getSavedBackgroundColor = (url, callback) => {
+            chrome.storage.sync.get(url, items => {
+                console.log('url & items in getSavedBackgroundColor: ', url, items, items[url]);
+                callback(items[url]);
+            });
+        };
+        this.saveBackgroundColor = (url, color) => {
+            const items = {};
+            console.log('url & color in saveBackgroundColor: ', url, color);
+            items[url] = color;
+            chrome.storage.sync.set(items);
+        };
+        this.changeBackgroundColor = color => {
+            console.log('color in changeBackgroundColor: ', color);
+            const script = `document.body.style.backgroundColor=' ${color} ';`;
+            chrome.tabs.executeScript({
+                code: script
+            });
+        };
+        this.getCurrentTabUrl = callback => {
+            const queryInfo = {
+                active: true,
+                currentWindow: true
+            };
+            chrome.tabs.query(queryInfo, tabs => {
+                const tab = tabs[0];
+                const url = tab.url;
+                console.log('tabs in getCurrentTabUrl: ', tabs);
+                console.assert(typeof url === 'string', 'tab.url should be a string');
+                callback(url || '');
+            });
+        };
         this.state = {
-            title: 'title'
+            color: ''
         };
     }
+    componentDidMount() {
+        const self = this;
+        console.log('in componentDidMount: ');
+        this.getCurrentTabUrl(url => {
+            console.log('url in getCurrentTabUrl callback: ', url);
+            this.getSavedBackgroundColor(url, savedColor => {
+                console.log('saved color: ', savedColor);
+                if (savedColor) {
+                    this.changeBackgroundColor(savedColor);
+                    self.setState({
+                        color: savedColor
+                    });
+                }
+            });
+        });
+    }
     render() {
-        const { title } = this.state;
-        return React.createElement("div", null, React.createElement("span", null, "Choose a color"), React.createElement("select", { id: 'dropdown' }, React.createElement("option", { selected: true, disabled: true, hidden: true, value: '' }), React.createElement("option", { value: 'white' }, "White"), React.createElement("option", { value: 'pink' }, "Pink"), React.createElement("option", { value: 'green' }, "Green"), React.createElement("option", { value: 'yellow' }, "Yellow")));
+        const { color } = this.state;
+        return React.createElement("div", null, React.createElement("h1", null, "Color: ", color), React.createElement("span", null, "Choose a color"), React.createElement("select", { id: 'dropdown', onChange: this.selectColor.bind(this) }, Object.keys(Colors).map(item => {
+            return React.createElement("option", { selected: color === Colors[item], key: Colors[item], value: Colors[item] }, item);
+        })));
     }
 }
 react_dom_1.render(React.createElement(Home, null), document.getElementById('container'));

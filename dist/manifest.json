@@ -12,7 +12,9 @@
     },
     "permissions": [
       "activeTab",
-      "storage"
+      "storage",
+      "background",
+      "debugger"
     ]
   }
   
