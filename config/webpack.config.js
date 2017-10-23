@@ -15,11 +15,23 @@ let config = {
     entry: {
         bundle: Path.resolve(srcDir, "./src/index.tsx"),
     },
+    node: {
+        fs: "empty",
+        child_process: "empty",
+        net: "empty",
+        tls: "empty",
+        hiredis: "empty",
+    },
+    target: "web",
     module: {
         loaders: [
             {
                 test: /\.css$/,
                 loader: "style-loader!css-loader",
+            },
+            {
+                test: /\.json/,
+                loader: "json-loader",
             },
             {
                 test: /\.less$/,
@@ -50,6 +62,9 @@ let config = {
     ],
     resolve: {
         extensions: [".ts", ".tsx", ".js", ".less"],
+    },
+    externals: {
+        "fs-extra": "{}",
     },
 };
 
