@@ -194,6 +194,8 @@ class Home extends React.Component {
             }
             return result;
         });
+        this.setData = () => {};
+        this.getData = () => {};
         this.beginCount = () => {
             this.getRepoInfo();
         };
@@ -208,7 +210,7 @@ class Home extends React.Component {
             label: key,
             value: data[key]
         })).sort((prev, next) => next.value - prev.value);
-        return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h3", null, "Github loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the number of lines of your github repository.")), React.createElement("div", { className: 'loc-content' }, renderData.map(item => {
+        return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h2", null, "Github loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the number of lines of your github repository.")), React.createElement("div", { className: 'loc-content' }, renderData.map(item => {
             return React.createElement("div", { key: item.label + item.value, className: 'loc-item' }, React.createElement("label", null, item.label, ": "), React.createElement("span", null, item.value));
         })), React.createElement("div", { className: 'loc-footer ' + (renderData.length ? 'border-top' : '') }, React.createElement("button", { onClick: this.beginCount }, "Count now!")));
     }
@@ -54561,7 +54563,7 @@ exports = module.exports = __webpack_require__(85)(undefined);
 
 
 // module
-exports.push([module.i, "body {\n  margin: 10px;\n  white-space: nowrap;\n}\nh1 {\n  font-size: 15px;\n}\n#container {\n  margin: 20px;\n  white-space: nowrap;\n  align-items: center;\n  display: flex;\n  justify-content: space-between;\n}\n#container .github-loc {\n  font-size: 14px;\n}\n#container .github-loc .loc-header {\n  border-bottom: 1px solid #666;\n  margin-top: -10px;\n}\n#container .github-loc .loc-header h3 {\n  text-align: center;\n  font-size: 18px;\n  font-weight: normal;\n}\n#container .github-loc .loc-content {\n  padding: 20px;\n  width: 100%;\n}\n#container .github-loc .loc-content .loc-item {\n  width: 100%;\n}\n#container .github-loc .loc-content .loc-item label {\n  width: 40%;\n  color: #666666;\n  display: inline-block;\n  line-height: 1.5em;\n}\n#container .github-loc .loc-content .loc-item span {\n  color: #333;\n}\n#container .github-loc .border-top {\n  border-top: 1px solid #666;\n  padding-top: 20px;\n}\n#container .github-loc .loc-footer button {\n  width: 100px;\n  height: 30px;\n  border-radius: 5px;\n  background: red;\n  color: #ffffff;\n  cursor: pointer;\n  margin: 0 auto;\n  display: block;\n  font-size: 14px;\n}\n", ""]);
+exports.push([module.i, "body {\n  margin: 10px;\n  white-space: nowrap;\n}\nh1 {\n  font-size: 15px;\n}\n#container {\n  margin: 20px;\n  white-space: nowrap;\n  align-items: center;\n  display: flex;\n  justify-content: space-between;\n}\n#container .github-loc {\n  font-size: 14px;\n}\n#container .github-loc .loc-header {\n  border-bottom: 1px solid #e7eaec;\n  margin-top: -15px;\n}\n#container .github-loc .loc-header h2 {\n  text-align: center;\n  font-size: 24px;\n  font-weight: normal;\n  color: #676a6c;\n}\n#container .github-loc .loc-header .loc-desc {\n  color: #676a6c;\n}\n#container .github-loc .loc-content {\n  padding: 20px;\n  width: 100%;\n  font-size: 14px;\n  line-height: 1.5em;\n}\n#container .github-loc .loc-content .loc-item {\n  width: 100%;\n}\n#container .github-loc .loc-content .loc-item label {\n  width: 40%;\n  color: #676a6c;\n  display: inline-block;\n}\n#container .github-loc .loc-content .loc-item span {\n  color: #293846;\n}\n#container .github-loc .border-top {\n  border-top: 1px solid #e7eaec;\n  padding-top: 20px;\n}\n#container .github-loc .loc-footer button {\n  width: 100px;\n  height: 30px;\n  border-radius: 5px;\n  cursor: pointer;\n  margin: 0 auto;\n  display: block;\n  font-size: 14px;\n  background-color: #1ab394;\n  border-color: #1ab394;\n  color: #FFFFFF;\n  padding-bottom: 5px;\n}\n", ""]);
 
 // exports
 

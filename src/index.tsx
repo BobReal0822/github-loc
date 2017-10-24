@@ -159,6 +159,14 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     return result;
   }
 
+  setData = () => {
+    //
+  }
+
+  getData = () => {
+    //
+  }
+
   beginCount = () => {
     this.getRepoInfo();
   }
@@ -173,7 +181,7 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     return (
       <div className='github-loc'>
         <div className='loc-header'>
-          <h3>Github loc</h3>
+          <h2>Github loc</h2>
           <p className='loc-desc'>Counts the number of lines of your github repository.</p>
         </div>
         <div className='loc-content'>
