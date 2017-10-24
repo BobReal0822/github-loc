@@ -30,6 +30,12 @@ interface GithubFileInfo {
   type: string;
 }
 
+interface StorageItem {
+  [key: string]: {
+    [key: string]: number;
+  };
+}
+
 const bg = chrome && chrome.extension && chrome.extension.getBackgroundPage() || {
   console: window.console
 };
@@ -42,6 +48,10 @@ const GithubApi = {
   getContent: `https://api.github.com/repos/:owner/:repo/contents?client_id=${ ClientId }&client_secret=${ ClientSecret }`
 };
 const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_]+)/;
+const queryInfo = {
+  active: true,
+  currentWindow: true
+};
 
 class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
   state: HomeStateInfo;
@@ -54,24 +64,40 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
   }
 
   componentDidMount() {
-    // console.log('in componentDidMount: ');
+    const self = this;
+
+    this.getData(data => {
+      if (data && Object.keys(data).length) {
+        console.log('set Data now in componentDidMount ', data);
+        self.setState({
+          data
+        });
+      }
+    });
+  }
+
+  getUserAndRepoByUrl = (url: string): {
+    user: string;
+    repo: string;
+  } => {
+    const match = url && url.match(Reg);
+    const user = match && match[1] || '';
+    const repo = match && match[2] || '';
+
+    return {
+      user,
+      repo
+    };
   }
 
   getRepoInfo = () => {
-    const queryInfo = {
-      active: true,
-      currentWindow: true
-    };
-
     chrome.tabs.query(queryInfo, tabs => {
       const { url } = tabs && tabs[0];
       if (!url) {
         return;
       }
 
-      const match = url.match(Reg);
-      const user = match && match[1];
-      const repo = match && match[2];
+      const { user, repo } = this.getUserAndRepoByUrl(url);
 
       if (!user) {
         console.log('no user.');
@@ -124,6 +150,8 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     console.log('result data: ', data);
     this.setState({
       data
+    }, () => {
+      self.setData(data);
     });
   }
 
@@ -159,16 +187,62 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     return result;
   }
 
-  setData = () => {
-    //
+  setData = (data: any) => {
+    // const { data } = this.state;
+
+    chrome.tabs.query(queryInfo, tabs => {
+      const { url } = tabs && tabs[0];
+      const key = this.getUserAndRepoByUrl(url || '');
+      const items: StorageItem = {};
+
+      if (!url) {
+        return;
+      }
+
+      items[key.user + key.repo] = data;
+      console.log('key in setData: ', key, items);
+      chrome.storage.sync.set(items);
+    });
   }
 
-  getData = () => {
-    //
+  getData = (callback: (data: any) => any) => {
+    const self = this;
+    // const { data } = this.state;
+
+    chrome.tabs.query(queryInfo, tabs => {
+      const { url } = tabs && tabs[0];
+      const key = this.getUserAndRepoByUrl(url || '');
+
+      if (!url) {
+        return;
+      }
+
+      console.log('url in getData: ', url);
+      chrome.storage.sync.get(key.user + key.repo, items => {
+        const data: {
+          [key: string]: number;
+        } = items[key.user + key.repo] || {};
+
+        console.log('key in getData: ', key, items, data);
+        callback(data);
+      });
+    });
   }
 
   beginCount = () => {
-    this.getRepoInfo();
+    const self = this;
+
+    // this.getRepoInfo();
+    this.getData(data => {
+      if (data && Object.keys(data).length) {
+        console.log('set Data now; ', data);
+        self.setState({
+          data
+        });
+      } else {
+        self.getRepoInfo();
+      }
+    });
   }
 
   render() {
@@ -177,6 +251,8 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
       label: key,
       value: data[key]
     })).sort((prev, next) => next.value - prev.value);
+
+    console.log('in render: ', data, renderData);
 
     return (
       <div className='github-loc'>

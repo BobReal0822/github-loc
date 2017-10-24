@@ -112,22 +112,29 @@ const GithubApi = {
     getContent: `https://api.github.com/repos/:owner/:repo/contents?client_id=${ClientId}&client_secret=${ClientSecret}`
 };
 const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_]+)/;
+const queryInfo = {
+    active: true,
+    currentWindow: true
+};
 class Home extends React.Component {
     constructor(props) {
         super(props);
-        this.getRepoInfo = () => {
-            const queryInfo = {
-                active: true,
-                currentWindow: true
+        this.getUserAndRepoByUrl = url => {
+            const match = url && url.match(Reg);
+            const user = match && match[1] || '';
+            const repo = match && match[2] || '';
+            return {
+                user,
+                repo
             };
+        };
+        this.getRepoInfo = () => {
             chrome.tabs.query(queryInfo, tabs => {
                 const { url } = tabs && tabs[0];
                 if (!url) {
                     return;
                 }
-                const match = url.match(Reg);
-                const user = match && match[1];
-                const repo = match && match[2];
+                const { user, repo } = this.getUserAndRepoByUrl(url);
                 if (!user) {
                     console.log('no user.');
                 } else if (!repo) {
@@ -168,6 +175,8 @@ class Home extends React.Component {
             console.log('result data: ', data);
             this.setState({
                 data
+            }, () => {
+                self.setData(data);
             });
         });
         this.getRepoContents = source => __awaiter(this, void 0, void 0, function* () {
@@ -194,22 +203,70 @@ class Home extends React.Component {
             }
             return result;
         });
-        this.setData = () => {};
-        this.getData = () => {};
+        this.setData = data => {
+            chrome.tabs.query(queryInfo, tabs => {
+                const { url } = tabs && tabs[0];
+                const key = this.getUserAndRepoByUrl(url || '');
+                const items = {};
+                if (!url) {
+                    return;
+                }
+                items[key.user + key.repo] = data;
+                console.log('key in setData: ', key, items);
+                chrome.storage.sync.set(items);
+            });
+        };
+        this.getData = callback => {
+            const self = this;
+            chrome.tabs.query(queryInfo, tabs => {
+                const { url } = tabs && tabs[0];
+                const key = this.getUserAndRepoByUrl(url || '');
+                if (!url) {
+                    return;
+                }
+                console.log('url in getData: ', url);
+                chrome.storage.sync.get(key.user + key.repo, items => {
+                    const data = items[key.user + key.repo] || {};
+                    console.log('key in getData: ', key, items, data);
+                    callback(data);
+                });
+            });
+        };
         this.beginCount = () => {
-            this.getRepoInfo();
+            const self = this;
+            this.getData(data => {
+                if (data && Object.keys(data).length) {
+                    console.log('set Data now; ', data);
+                    self.setState({
+                        data
+                    });
+                } else {
+                    self.getRepoInfo();
+                }
+            });
         };
         this.state = {
             data: {}
         };
     }
-    componentDidMount() {}
+    componentDidMount() {
+        const self = this;
+        this.getData(data => {
+            if (data && Object.keys(data).length) {
+                console.log('set Data now in componentDidMount ', data);
+                self.setState({
+                    data
+                });
+            }
+        });
+    }
     render() {
         const { data } = this.state;
         const renderData = Object.keys(data).map(key => ({
             label: key,
             value: data[key]
         })).sort((prev, next) => next.value - prev.value);
+        console.log('in render: ', data, renderData);
         return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h2", null, "Github loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the number of lines of your github repository.")), React.createElement("div", { className: 'loc-content' }, renderData.map(item => {
             return React.createElement("div", { key: item.label + item.value, className: 'loc-item' }, React.createElement("label", null, item.label, ": "), React.createElement("span", null, item.value));
         })), React.createElement("div", { className: 'loc-footer ' + (renderData.length ? 'border-top' : '') }, React.createElement("button", { onClick: this.beginCount }, "Count now!")));
