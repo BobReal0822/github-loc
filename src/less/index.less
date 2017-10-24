@@ -35,17 +35,26 @@ h1 {
 
     .loc-content {
       padding: 20px;
-      width: 100%;
       font-size: 14px;
       line-height: 1.5em;
+      text-align: center;
+
+      .loc-content-message {
+        text-align: center;
+        color: #ed5565;
+        margin: 0;
+      }
 
       .loc-item {
         width: 100%;
+        text-align: left;
+        line-height: 24px;
         
         label {
-          width: 40%;
+          width: 60%;
           color: #676a6c;
           display: inline-block;
+          text-align: left;
         }
 
         span {
@@ -56,7 +65,8 @@ h1 {
 
     .border-top {
       border-top: 1px solid #e7eaec;
-      padding-top: 20px;
+      padding-top: 25px;
+      padding-bottom: 5px;
     }
 
     .loc-footer {
@@ -68,13 +78,31 @@ h1 {
         height: 30px;
         border-radius: 5px;
         cursor: pointer;
-        margin: 0 auto;
         display: block;
         font-size: 14px;
         background-color: #1ab394;
         border-color: #1ab394;
         color: #FFFFFF;
         padding-bottom: 5px;
+        display: inline;
+        float: left;
+        margin-right: 10px;
+      }
+
+      .footer-disabled {
+        background-color: #ffffff;
+        border-color: #ffffff;
+        color: #1ab394;
+      }
+
+      .loc-footer-date {
+        display: inline;
+        line-height: 30px;
+        margin-top: 5px;
+        font-size: 12px;
+        color: #676a6c;
+        font-size: 12px;
+        float: left
       }
     }
   }

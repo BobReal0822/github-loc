@@ -96,6 +96,7 @@ var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, gene
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Bluebird = __webpack_require__(36);
+const _ = __webpack_require__(58);
 const node_loc_1 = __webpack_require__(39);
 const React = __webpack_require__(14);
 const react_dom_1 = __webpack_require__(63);
@@ -116,6 +117,18 @@ const queryInfo = {
     active: true,
     currentWindow: true
 };
+function formatLabel(label) {
+    if (!label) {
+        return '';
+    }
+    const res = label.split('');
+    res[0] = label[0].toUpperCase();
+    return res.join('');
+}
+function formatDate(date) {
+    const thisDate = new Date(date);
+    return date ? thisDate.toLocaleString() : '';
+}
 class Home extends React.Component {
     constructor(props) {
         super(props);
@@ -123,22 +136,28 @@ class Home extends React.Component {
             const match = url && url.match(Reg);
             const user = match && match[1] || '';
             const repo = match && match[2] || '';
+            if (!user || !repo) {
+                this.setState({
+                    message: 'Not a github repository.'
+                });
+            }
             return {
                 user,
                 repo
             };
         };
         this.getRepoInfo = () => {
+            const self = this;
             chrome.tabs.query(queryInfo, tabs => {
                 const { url } = tabs && tabs[0];
                 if (!url) {
                     return;
                 }
                 const { user, repo } = this.getUserAndRepoByUrl(url);
-                if (!user) {
-                    console.log('no user.');
-                } else if (!repo) {
-                    console.log('no repo');
+                if (!user || !repo) {
+                    self.setState({
+                        message: 'Not a github repository.'
+                    });
                 } else {
                     const api = GithubApi.getContent.replace(':owner', user).replace(':repo', repo);
                     this.getRepo(api);
@@ -148,33 +167,28 @@ class Home extends React.Component {
         this.getRepo = url => __awaiter(this, void 0, void 0, function* () {
             const self = this;
             const { data } = this.state;
-            console.log('url in getRepo: ', url);
             yield Request.get(url).then(response => __awaiter(this, void 0, void 0, function* () {
                 const body = response && response.body;
                 const contents = [];
                 const temp = yield Bluebird.map(body, item => __awaiter(this, void 0, void 0, function* () {
-                    console.log('item before await: ', item);
                     const contentItem = yield self.getRepoContents(item);
-                    console.log('contentItem: ', contentItem);
                     return contentItem;
                 }));
                 temp.map(item => item.map(subItem => contents.push(subItem)));
-                console.log('contents should return: ', temp, contents);
                 return contents;
             })).then(contents => {
-                console.log('contents returned: ', contents);
                 return contents.map(item => {
-                    const info = node_loc_1.LocFile.getFileInfoByContent(item.name, item.content);
-                    if (info.lang) {
-                        data[info.lang] = (data[info.lang] || 0) + info.lines.total;
+                    if (item.name && item.content) {
+                        const info = node_loc_1.LocFile.getFileInfoByContent(item.name, item.content);
+                        if (info.lang) {
+                            data[info.lang] = (data[info.lang] || 0) + info.lines.total;
+                        }
                     }
                 });
-            }).catch(err => {
-                console.log('err in getRepo: ', err);
             });
-            console.log('result data: ', data);
             this.setState({
-                data
+                data,
+                date: new Date().getTime()
             }, () => {
                 self.setData(data);
             });
@@ -182,7 +196,6 @@ class Home extends React.Component {
         this.getRepoContents = source => __awaiter(this, void 0, void 0, function* () {
             const self = this;
             const result = [];
-            console.log('source in gerRepoContents: ', source);
             if (source && source.type === 'file') {
                 const item = yield Request.get(source.url).then(res => {
                     const { name, content } = res && res.body;
@@ -195,15 +208,14 @@ class Home extends React.Component {
             } else if (source && source.type === 'dir') {
                 const contents = yield Request.get(source.url).then(res => res && res.body);
                 const temp = yield Bluebird.map(contents, content => __awaiter(this, void 0, void 0, function* () {
-                    console.log('content in getRepoContents: ', content);
                     return yield self.getRepoContents(content);
                 }));
                 temp.map(item => item.map(subItem => result.push(subItem)));
-                console.log('result in getRepoContents dir: ', result);
             }
             return result;
         });
         this.setData = data => {
+            const { date } = this.state;
             chrome.tabs.query(queryInfo, tabs => {
                 const { url } = tabs && tabs[0];
                 const key = this.getUserAndRepoByUrl(url || '');
@@ -211,8 +223,11 @@ class Home extends React.Component {
                 if (!url) {
                     return;
                 }
-                items[key.user + key.repo] = data;
-                console.log('key in setData: ', key, items);
+                items[key.user + key.repo] = {
+                    data,
+                    date
+                };
+                console.log('items in setData: ', items);
                 chrome.storage.sync.set(items);
             });
         };
@@ -224,21 +239,21 @@ class Home extends React.Component {
                 if (!url) {
                     return;
                 }
-                console.log('url in getData: ', url);
                 chrome.storage.sync.get(key.user + key.repo, items => {
-                    const data = items[key.user + key.repo] || {};
-                    console.log('key in getData: ', key, items, data);
-                    callback(data);
+                    const content = items[key.user + key.repo] || {};
+                    const { data, date } = content;
+                    console.log('items in getData: ', items);
+                    callback(data, date);
                 });
             });
         };
         this.beginCount = () => {
             const self = this;
-            this.getData(data => {
+            this.getData((data, date) => {
                 if (data && Object.keys(data).length) {
-                    console.log('set Data now; ', data);
                     self.setState({
-                        data
+                        data,
+                        date
                     });
                 } else {
                     self.getRepoInfo();
@@ -246,30 +261,38 @@ class Home extends React.Component {
             });
         };
         this.state = {
-            data: {}
+            data: {},
+            message: '',
+            date: 0
         };
     }
     componentDidMount() {
         const self = this;
-        this.getData(data => {
+        this.getData((data, date) => {
+            console.log('data & date in componentDidMount: ', data, date);
             if (data && Object.keys(data).length) {
-                console.log('set Data now in componentDidMount ', data);
                 self.setState({
-                    data
+                    data,
+                    date
                 });
             }
         });
     }
     render() {
-        const { data } = this.state;
+        const { data, message, date } = this.state;
         const renderData = Object.keys(data).map(key => ({
-            label: key,
+            label: formatLabel(key),
             value: data[key]
         })).sort((prev, next) => next.value - prev.value);
-        console.log('in render: ', data, renderData);
-        return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h2", null, "Github loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the number of lines of your github repository.")), React.createElement("div", { className: 'loc-content' }, renderData.map(item => {
+        if (renderData && renderData.length) {
+            renderData.push({
+                label: 'Total',
+                value: _.sum(renderData.map(item => item.value))
+            });
+        }
+        return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h2", null, "Github loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the lines of a github repository.")), React.createElement("div", { className: 'loc-content' }, message ? React.createElement("p", { className: 'loc-content-message' }, message) : '', !message && renderData.length ? renderData.map(item => {
             return React.createElement("div", { key: item.label + item.value, className: 'loc-item' }, React.createElement("label", null, item.label, ": "), React.createElement("span", null, item.value));
-        })), React.createElement("div", { className: 'loc-footer ' + (renderData.length ? 'border-top' : '') }, React.createElement("button", { onClick: this.beginCount }, "Count now!")));
+        }) : !message ? React.createElement("p", { className: 'loc-content-message' }, "No data.") : ''), React.createElement("div", { className: `loc-footer ${renderData.length ? ' border-top' : ''} ${message ? ' footer-disabled' : ''}` }, React.createElement("button", { disabled: !!message, onClick: this.beginCount }, date && renderData.length ? 'Recount' : 'Count', "!"), React.createElement("span", { title: 'Updated date', className: 'loc-footer-date' }, formatDate(date))));
     }
 }
 react_dom_1.render(React.createElement(Home, null), document.getElementById('container'));
@@ -54620,7 +54643,7 @@ exports = module.exports = __webpack_require__(85)(undefined);
 
 
 // module
-exports.push([module.i, "body {\n  margin: 10px;\n  white-space: nowrap;\n}\nh1 {\n  font-size: 15px;\n}\n#container {\n  margin: 20px;\n  white-space: nowrap;\n  align-items: center;\n  display: flex;\n  justify-content: space-between;\n}\n#container .github-loc {\n  font-size: 14px;\n}\n#container .github-loc .loc-header {\n  border-bottom: 1px solid #e7eaec;\n  margin-top: -15px;\n}\n#container .github-loc .loc-header h2 {\n  text-align: center;\n  font-size: 24px;\n  font-weight: normal;\n  color: #676a6c;\n}\n#container .github-loc .loc-header .loc-desc {\n  color: #676a6c;\n}\n#container .github-loc .loc-content {\n  padding: 20px;\n  width: 100%;\n  font-size: 14px;\n  line-height: 1.5em;\n}\n#container .github-loc .loc-content .loc-item {\n  width: 100%;\n}\n#container .github-loc .loc-content .loc-item label {\n  width: 40%;\n  color: #676a6c;\n  display: inline-block;\n}\n#container .github-loc .loc-content .loc-item span {\n  color: #293846;\n}\n#container .github-loc .border-top {\n  border-top: 1px solid #e7eaec;\n  padding-top: 20px;\n}\n#container .github-loc .loc-footer button {\n  width: 100px;\n  height: 30px;\n  border-radius: 5px;\n  cursor: pointer;\n  margin: 0 auto;\n  display: block;\n  font-size: 14px;\n  background-color: #1ab394;\n  border-color: #1ab394;\n  color: #FFFFFF;\n  padding-bottom: 5px;\n}\n", ""]);
+exports.push([module.i, "body {\n  margin: 10px;\n  white-space: nowrap;\n}\nh1 {\n  font-size: 15px;\n}\n#container {\n  margin: 20px;\n  white-space: nowrap;\n  align-items: center;\n  display: flex;\n  justify-content: space-between;\n}\n#container .github-loc {\n  font-size: 14px;\n}\n#container .github-loc .loc-header {\n  border-bottom: 1px solid #e7eaec;\n  margin-top: -15px;\n}\n#container .github-loc .loc-header h2 {\n  text-align: center;\n  font-size: 24px;\n  font-weight: normal;\n  color: #676a6c;\n}\n#container .github-loc .loc-header .loc-desc {\n  color: #676a6c;\n}\n#container .github-loc .loc-content {\n  padding: 20px;\n  font-size: 14px;\n  line-height: 1.5em;\n  text-align: center;\n}\n#container .github-loc .loc-content .loc-content-message {\n  text-align: center;\n  color: #ed5565;\n  margin: 0;\n}\n#container .github-loc .loc-content .loc-item {\n  width: 100%;\n  text-align: left;\n  line-height: 24px;\n}\n#container .github-loc .loc-content .loc-item label {\n  width: 60%;\n  color: #676a6c;\n  display: inline-block;\n  text-align: left;\n}\n#container .github-loc .loc-content .loc-item span {\n  color: #293846;\n}\n#container .github-loc .border-top {\n  border-top: 1px solid #e7eaec;\n  padding-top: 25px;\n  padding-bottom: 5px;\n}\n#container .github-loc .loc-footer button {\n  width: 100px;\n  height: 30px;\n  border-radius: 5px;\n  cursor: pointer;\n  display: block;\n  font-size: 14px;\n  background-color: #1ab394;\n  border-color: #1ab394;\n  color: #FFFFFF;\n  padding-bottom: 5px;\n  display: inline;\n  float: left;\n  margin-right: 10px;\n}\n#container .github-loc .loc-footer .footer-disabled {\n  background-color: #ffffff;\n  border-color: #ffffff;\n  color: #1ab394;\n}\n#container .github-loc .loc-footer .loc-footer-date {\n  display: inline;\n  line-height: 30px;\n  margin-top: 5px;\n  color: #676a6c;\n  font-size: 12px;\n  float: left;\n}\n", ""]);
 
 // exports
 
