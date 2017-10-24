@@ -13,4 +13,66 @@ h1 {
   align-items: center;
   display: flex;
   justify-content: space-between;
+
+  .github-loc {
+    font-size: 14px;
+
+    .loc-header {
+      border-bottom: 1px solid #666;
+      margin-top: -10px;
+
+      h3 {
+        text-align: center;
+        font-size: 18px;
+        font-weight: normal;
+      }
+  
+      .loc-desc {
+        // font-size: 16px;
+      }
+    }
+
+    .loc-content {
+      padding: 20px;
+      width: 100%;
+      // border-bottom: 1px #666 solid;
+
+      .loc-item {
+        width: 100%;
+        
+        label {
+          width: 40%;
+          color: #666666;
+          display: inline-block;
+          line-height: 1.5em;
+        }
+
+        span {
+          color: #333;
+        }
+      }
+    }
+
+    .border-top {
+      border-top: 1px solid #666;
+      padding-top: 20px;
+    }
+
+    .loc-footer {
+      // width: 100%;
+      // margin-top: 20px;
+
+      button {
+        width: 100px;
+        height: 30px;
+        border-radius: 5px;
+        background: red;
+        color: #ffffff;
+        cursor: pointer;
+        margin: 0 auto;
+        display: block;
+        font-size: 14px;
+      }
+    }
+  }
 }

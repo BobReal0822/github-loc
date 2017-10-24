@@ -1,5 +1,6 @@
 
 import * as Bluebird from 'bluebird';
+import * as _ from 'lodash';
 import { LocFile } from 'node-loc';
 import * as React from 'react';
 import { render } from 'react-dom';
@@ -35,8 +36,10 @@ const bg = chrome && chrome.extension && chrome.extension.getBackgroundPage() ||
 const thisConsole = bg && bg.console;
 console.log = thisConsole && thisConsole.log;
 
+const ClientId = '810e591519c3ed77774e';
+const ClientSecret = '91dd3d397fb8109fd6ce1054a4b12eb87436eb33';
 const GithubApi = {
-  getContent: 'https://api.github.com/repos/:owner/:repo/contents'
+  getContent: `https://api.github.com/repos/:owner/:repo/contents?client_id=${ ClientId }&client_secret=${ ClientSecret }`
 };
 const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_]+)/;
 
@@ -51,8 +54,7 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
   }
 
   componentDidMount() {
-    console.log('in componentDidMount: ');
-    this.getRepoInfo();
+    // console.log('in componentDidMount: ');
   }
 
   getRepoInfo = () => {
@@ -89,25 +91,37 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
 
     await Request.get(url).then(async response => {
       const body = response && response.body;
-      let contents: FileContentInfo[] = [];
+      const contents: FileContentInfo[] = [];
 
-      console.log('response in getRepo: ', response);
-      if (!body) {
-        //
-      } else {
-        contents = await self.getRepoContents(body);
-      }
+      const temp = await Bluebird.map(body, async (item: GithubFileInfo) => {
+        console.log('item before await: ', item);
+        const contentItem = await self.getRepoContents(item);
+        console.log('contentItem: ', contentItem);
+        // contents.concat(contentItem);
+        return contentItem;
+      });
 
-      console.log(' contents in getRepo: ', contents);
+      // contents = temp.reduce((a, b) => a.concat(b));
+      temp.map(item => item.map(subItem => contents.push(subItem)));
+
+      console.log('contents should return: ', temp, contents);
+
+      return contents;
+    }).then(contents => {
+      console.log('contents returned: ', contents);
 
       return contents.map(item => {
         const info = LocFile.getFileInfoByContent(item.name, item.content);
-        data[info.lang] = (data[info.lang] || 0) + info.lines.total;
+
+        if (info.lang) {
+          data[info.lang] = (data[info.lang] || 0) + info.lines.total;
+        }
       });
     }).catch(err => {
       console.log('err in getRepo: ', err);
     });
 
+    console.log('result data: ', data);
     this.setState({
       data
     });
@@ -117,53 +131,63 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     const self = this;
     const result: FileContentInfo[] = [];
 
+    console.log('source in gerRepoContents: ', source);
     if (source && source.type === 'file') {
       const item = await Request.get(source.url).then(res => {
-        const data = res && res.body;
+        const { name, content } = res && res.body;
 
-        return {
-          name: data && data.name,
-          content: data && data.content
+        return name && content && {
+          name,
+          content
         };
       });
 
       result.push(item);
     } else if (source && source.type === 'dir') {
       const contents: GithubFileInfo[] = await Request.get(source.url).then(res => res && res.body);
-      const data: FileContentInfo[] = [];
+      const temp = await Bluebird.map(contents, async content => {
+        console.log('content in getRepoContents: ', content);
 
-      await Bluebird.map(contents, async content => {
-        const contentRes = await self.getRepoContents(content);
-        data.concat(contentRes);
+        return await self.getRepoContents(content);
       });
 
-      console.log('items in getRepoContents: ', data);
+      temp.map(item => item.map(subItem => result.push(subItem)));
 
-      result.concat(data);
+      console.log('result in getRepoContents dir: ', result);
     }
 
     return result;
   }
 
+  beginCount = () => {
+    this.getRepoInfo();
+  }
+
   render() {
     const { data } = this.state;
+    const renderData = Object.keys(data).map(key => ({
+      label: key,
+      value: data[key]
+    })).sort((prev, next) => next.value - prev.value);
 
     return (
       <div className='github-loc'>
-        <h3>Github loc</h3>
-        <p className='loc-desc'>Counts the number of lines of your github repository.</p>
-        <hr />
+        <div className='loc-header'>
+          <h3>Github loc</h3>
+          <p className='loc-desc'>Counts the number of lines of your github repository.</p>
+        </div>
         <div className='loc-content'>
         {
-          Object.keys(data).map(key => {
-            const value = data[key];
-
-            return <div key={ key + value } className='loc-item'>
-              <label>{ key }: </label>
-              <span>{ value }</span>
+          renderData.map(item => {
+            return <div key={ item.label + item.value } className='loc-item'>
+              <label>{ item.label }: </label>
+              <span>{ item.value }</span>
             </div>;
           })
         }
+        </div>
+        <div className={ 'loc-footer ' + (renderData.length ? 'border-top' : '') }>
+          <button onClick={ this.beginCount }>Count now!</button>
         </div>
       </div>
     );

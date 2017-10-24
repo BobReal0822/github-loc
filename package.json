@@ -21,12 +21,14 @@
   "dependencies": {
     "@types/bluebird": "^3.5.16",
     "@types/chrome": "^0.0.50",
+    "@types/lodash": "^4.14.78",
     "@types/node": "^8.0.46",
     "@types/react": "^16.0.18",
     "@types/react-dom": "^16.0.2",
     "@types/superagent": "^3.5.6",
     "bluebird": "^3.5.1",
-    "node-loc": "^1.1.5",
+    "lodash": "^4.17.4",
+    "node-loc": "^1.1.6",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "superagent": "^3.7.0"

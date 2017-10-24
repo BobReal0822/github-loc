@@ -2465,9 +2465,9 @@ node-libs-browser@^2.0.0:
     util "^0.10.3"
     vm-browserify "0.0.4"
 
-node-loc@^1.1.5:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/node-loc/-/node-loc-1.1.5.tgz#0757aea75ad1ad643c58ffac86ba4b6f46a14732"
+node-loc@^1.1.6:
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/node-loc/-/node-loc-1.1.6.tgz#52b6c7e67e75178c2409adbf905066274ff1b197"
   dependencies:
     "@types/chalk" "^0.4.31"
     "@types/commander" "^2.11.0"
