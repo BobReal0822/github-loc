@@ -297,7 +297,7 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
           }) : (!message ? <p className='loc-content-message'>No data.</p> : '')
         }
         </div>
-        <div className={ `loc-footer ${ renderData.length ? ' border-top' : '' } ${ message ? ' footer-disabled' : ''}` }>
+        <div className={ `loc-footer  border-top ${ message ? ' footer-disabled' : ''}` }>
           <button disabled={ !!message } onClick={ this.beginCount }>{ date && renderData.length ? 'Recount' : 'Count' }!</button><span title='Updated date' className='loc-footer-date'>{ formatDate(date) }</span>
         </div>
       </div>
