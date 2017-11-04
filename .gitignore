@@ -56,3 +56,5 @@ mocks_data/proxy/**/__*
 .nicetmp
 
 !.eslintrc.js
+*.log
+*.zip

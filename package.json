@@ -6,7 +6,8 @@
   "scripts": {
     "wp": "webpack -w --config config/webpack.config.js",
     "wp-dev": "webpack-dev-server -w --config config/webpack.config.js",
-    "test": "mocha"
+    "test": "mocha",
+    "zip": "zip -r github-loc.zip ./dist"
   },
   "repository": {
     "type": "git",
