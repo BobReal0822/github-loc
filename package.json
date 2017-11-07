@@ -1,6 +1,6 @@
 {
   "name": "github-loc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Counts the lines of code in a github repository",
   "main": "index.html",
   "scripts": {
