@@ -3,7 +3,7 @@
   
     "name": "Githib Loc",
     "description": "Counts the lines of code in a github repository.",
-    "version": "1.0",
+    "version": "1.0.1",
   
     "author": "ephoton",
     "browser_action": {
