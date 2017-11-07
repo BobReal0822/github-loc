@@ -9,6 +9,8 @@ import * as Request from 'superagent';
 // tslint:disable-next-line
 import './less/index.less';
 
+import { ClientId, ClientSecret } from './config';
+
 interface HomeStateInfo {
   data: {
     [key: string]: number;
@@ -44,12 +46,11 @@ const bg = chrome && chrome.extension && chrome.extension.getBackgroundPage() ||
 const thisConsole = bg && bg.console;
 console.log = thisConsole && thisConsole.log;
 
-const ClientId = '810e591519c3ed77774e';
-const ClientSecret = '91dd3d397fb8109fd6ce1054a4b12eb87436eb33';
+console.log('client data : ', ClientId, ClientSecret);
 const GithubApi = {
   getContent: `https://api.github.com/repos/:owner/:repo/contents?client_id=${ ClientId }&client_secret=${ ClientSecret }`
 };
-const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_]+)/;
+const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_\-\.]+)/;
 const queryInfo = {
   active: true,
   currentWindow: true
@@ -70,6 +71,12 @@ function formatDate(date: number): string {
   const thisDate = new Date(date);
 
   return date ? thisDate.toLocaleString() : '';
+}
+
+function formatUrl(url: string) {
+  const str = `client_id=${ ClientId }&client_secret=${ ClientSecret }`;
+
+  return `${ url }${ url.indexOf('?') > -1 ? `&` : `?` }${ str }`;
 }
 
 class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
@@ -146,7 +153,7 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     const self = this;
     const { data } = this.state;
 
-    await Request.get(url).then(async response => {
+    await Request.get(formatUrl(url)).then(async response => {
       const body = response && response.body;
       const contents: FileContentInfo[] = [];
 
@@ -168,6 +175,9 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
           }
         }
       });
+    }).catch(err => {
+      //
+      console.log('err when request: ', err);
     });
 
     this.setState({
@@ -183,18 +193,26 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     const result: FileContentInfo[] = [];
 
     if (source && source.type === 'file') {
-      const item = await Request.get(source.url).then(res => {
+      const item = await Request.get(formatUrl(source.url)).then(res => {
         const { name, content } = res && res.body;
 
         return name && content && {
           name,
           content
         };
+      }).catch(err => {
+        //
+        console.log('err when request: ', err);
       });
 
-      result.push(item);
+      if (item) {
+        result.push(item);
+      }
     } else if (source && source.type === 'dir') {
-      const contents: GithubFileInfo[] = await Request.get(source.url).then(res => res && res.body);
+      const contents: GithubFileInfo[] = await Request.get(formatUrl(source.url)).then(res => res && res.body).catch(err => {
+        //
+        console.log('err when request: ', err);
+      });
       const temp = await Bluebird.map(contents, async content => {
         return await self.getRepoContents(content);
       });
@@ -281,8 +299,8 @@ class Home extends React.Component<HomePropsInfo, HomeStateInfo> {
     return (
       <div className='github-loc'>
         <div className='loc-header'>
-          <h2>Github loc</h2>
-          <p className='loc-desc'>Counts the lines of a github repository.</p>
+          <h2>Github Loc</h2>
+          <p className='loc-desc'>Counts the lines of code in a github repository.</p>
         </div>
         <div className='loc-content'>
         {

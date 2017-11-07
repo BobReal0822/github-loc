@@ -58,3 +58,5 @@ mocks_data/proxy/**/__*
 !.eslintrc.js
 *.log
 *.zip
+
+./src/config.ts

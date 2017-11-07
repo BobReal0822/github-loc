@@ -23025,17 +23025,17 @@ const React = __webpack_require__(13);
 const react_dom_1 = __webpack_require__(63);
 const Request = __webpack_require__(77);
 __webpack_require__(83);
+const config_1 = __webpack_require__(88);
 const bg = chrome && chrome.extension && chrome.extension.getBackgroundPage() || {
     console: window.console
 };
 const thisConsole = bg && bg.console;
 console.log = thisConsole && thisConsole.log;
-const ClientId = '810e591519c3ed77774e';
-const ClientSecret = '91dd3d397fb8109fd6ce1054a4b12eb87436eb33';
+console.log('client data : ', config_1.ClientId, config_1.ClientSecret);
 const GithubApi = {
-    getContent: `https://api.github.com/repos/:owner/:repo/contents?client_id=${ClientId}&client_secret=${ClientSecret}`
+    getContent: `https://api.github.com/repos/:owner/:repo/contents?client_id=${config_1.ClientId}&client_secret=${config_1.ClientSecret}`
 };
-const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_]+)/;
+const Reg = /^https\:\/\/github\.com\/(\w+)\/([a-zA-Z0-9-_\-\.]+)/;
 const queryInfo = {
     active: true,
     currentWindow: true
@@ -23051,6 +23051,10 @@ function formatLabel(label) {
 function formatDate(date) {
     const thisDate = new Date(date);
     return date ? thisDate.toLocaleString() : '';
+}
+function formatUrl(url) {
+    const str = `client_id=${config_1.ClientId}&client_secret=${config_1.ClientSecret}`;
+    return `${url}${url.indexOf('?') > -1 ? `&` : `?`}${str}`;
 }
 class Home extends React.Component {
     constructor(props) {
@@ -23090,7 +23094,7 @@ class Home extends React.Component {
         this.getRepo = url => __awaiter(this, void 0, void 0, function* () {
             const self = this;
             const { data } = this.state;
-            yield Request.get(url).then(response => __awaiter(this, void 0, void 0, function* () {
+            yield Request.get(formatUrl(url)).then(response => __awaiter(this, void 0, void 0, function* () {
                 const body = response && response.body;
                 const contents = [];
                 const temp = yield Bluebird.map(body, item => __awaiter(this, void 0, void 0, function* () {
@@ -23108,6 +23112,8 @@ class Home extends React.Component {
                         }
                     }
                 });
+            }).catch(err => {
+                console.log('err when request: ', err);
             });
             this.setState({
                 data,
@@ -23120,16 +23126,22 @@ class Home extends React.Component {
             const self = this;
             const result = [];
             if (source && source.type === 'file') {
-                const item = yield Request.get(source.url).then(res => {
+                const item = yield Request.get(formatUrl(source.url)).then(res => {
                     const { name, content } = res && res.body;
                     return name && content && {
                         name,
                         content
                     };
+                }).catch(err => {
+                    console.log('err when request: ', err);
                 });
-                result.push(item);
+                if (item) {
+                    result.push(item);
+                }
             } else if (source && source.type === 'dir') {
-                const contents = yield Request.get(source.url).then(res => res && res.body);
+                const contents = yield Request.get(formatUrl(source.url)).then(res => res && res.body).catch(err => {
+                    console.log('err when request: ', err);
+                });
                 const temp = yield Bluebird.map(contents, content => __awaiter(this, void 0, void 0, function* () {
                     return yield self.getRepoContents(content);
                 }));
@@ -23213,7 +23225,7 @@ class Home extends React.Component {
                 value: _.sum(renderData.map(item => item.value))
             });
         }
-        return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h2", null, "Github loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the lines of a github repository.")), React.createElement("div", { className: 'loc-content' }, message ? React.createElement("p", { className: 'loc-content-message' }, message) : '', !message && renderData.length ? renderData.map(item => {
+        return React.createElement("div", { className: 'github-loc' }, React.createElement("div", { className: 'loc-header' }, React.createElement("h2", null, "Github Loc"), React.createElement("p", { className: 'loc-desc' }, "Counts the lines of code in a github repository.")), React.createElement("div", { className: 'loc-content' }, message ? React.createElement("p", { className: 'loc-content-message' }, message) : '', !message && renderData.length ? renderData.map(item => {
             return React.createElement("div", { key: item.label + item.value, className: 'loc-item' }, React.createElement("label", null, item.label, ": "), React.createElement("span", null, item.value));
         }) : !message ? React.createElement("p", { className: 'loc-content-message' }, "No data.") : ''), React.createElement("div", { className: `loc-footer  border-top ${message ? ' footer-disabled' : ''}` }, React.createElement("button", { disabled: !!message, onClick: this.beginCount }, date && renderData.length ? 'Recount' : 'Count', "!"), React.createElement("span", { title: 'Updated date', className: 'loc-footer-date' }, formatDate(date))));
     }
@@ -55196,6 +55208,17 @@ module.exports = function (css) {
 	return fixedCss;
 };
 
+
+/***/ }),
+/* 88 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ClientId = '810e591519c3ed77774e';
+exports.ClientSecret = '91dd3d397fb8109fd6ce1054a4b12eb87436eb33';
 
 /***/ })
 /******/ ]);

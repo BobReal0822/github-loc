@@ -1,10 +1,11 @@
 {
     "manifest_version": 2,
   
-    "name": "Githib loc",
-    "description": "Counts the lines of a github repository.",
+    "name": "Githib Loc",
+    "description": "Counts the lines of code in a github repository.",
     "version": "1.0",
   
+    "author": "ephoton",
     "browser_action": {
       "default_icon": "icon.png",
       "default_popup": "index.html",

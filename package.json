@@ -1,7 +1,7 @@
 {
   "name": "github-loc",
   "version": "1.0.0",
-  "description": "",
+  "description": "Counts the lines of code in a github repository",
   "main": "index.html",
   "scripts": {
     "wp": "webpack -w --config config/webpack.config.js",
@@ -9,6 +9,11 @@
     "test": "mocha",
     "zip": "zip -r github-loc.zip ./dist"
   },
+  "keywords": [
+    "loc",
+    "node-loc",
+    "github loc"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ephoton/github-loc.git"
